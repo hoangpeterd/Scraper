@@ -1,7 +1,7 @@
 $( document ).ready(function() {
     console.log( "ready!" );
     // get scrape
-    $("button").on("click", function() {
+    $("#scrapeButton").on("click", function() {
         console.log("click");
             $("#articleAppend").empty();
             $.get("/all").done(function (result) {
