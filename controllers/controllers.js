@@ -72,7 +72,6 @@ app.get("/scrape", function(req, res) {
       }
     });
   });
-  return i < 9;
 
   // This will send a "Scrape Complete" message to the browser
   res.json(data);
