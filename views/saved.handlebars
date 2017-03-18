@@ -1,0 +1,21 @@
+{{#each doc}}
+<!-- for each news article -->
+<div class="container" id="saveBod">
+    <div>
+        <div class="eachNews">
+            <h3>
+                {{this.title}}
+                <a class="newsLink" href="{{this.link}}">Link</a>    
+            </h3>
+                <span>
+                    <button class="btn newsBtn delNews" data-id="{{this._id}}">
+                        Delete
+                    </button>
+                    <button class="btn newsBtn noteModal" data-id="{{this._id}}">
+                        Add Notes
+                    </button>
+                </span>
+        </div>
+    </div>
+</div>
+{{/each}}

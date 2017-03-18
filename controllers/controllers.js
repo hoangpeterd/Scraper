@@ -4,80 +4,71 @@ var app = express();
 
 var request = require("request");
 var cheerio = require("cheerio");
-var mongojs = require("mongojs");
+var mongoose = require("mongoose");
 
-// Database configuration
-var databaseUrl = "scraper";
-var collections = ["scrapedData"];
+var Mnews = require("./../models/news.js");
+var notes = require("./../models/notes.js");
 
-var db = mongojs(databaseUrl, collections);
-db.on("error", function (error) {
-    console.log("Database Error:", error);
-});
+// Database configuration with mongoose
+var db = mongoose.connection;
 
 // Main route (simple Hello World Message)
-app.get("/", function(req, res) {
-  res.render("index", {title: "news scraper"});
-});
-
-// Retrieve data from the db
-app.get("/all", function(req, res) {
-  // Find all results from the scrapedData collection in the db
-  db.scrapedData.find({}, function(error, found) {
-    // Throw any errors to the console
-    if (error) {
-      console.log(error);
-    }
-    // If there are no errors, send the data to the browser as a json
-    else {
-      res.json(found);
-    }
+app.get("/", function (req, res) {
+  res.render("index", {
+    title: "news scraper"
   });
 });
 
 // Scrape data from one site and place it into the mongodb db
-app.get("/scrape", function(req, res) {
-  // Make a request for the news section of ycombinator
-  var data = [];
-  request("https://news.ycombinator.com/", function(error, response, html) {
+app.get("/scrape", function (req, res) {
+  request("https://news.ycombinator.com/", function (error, response, html) {
     // Load the html body from request into cheerio
     var $ = cheerio.load(html);
+    // Make a request for the news section of ycombinator
+    var newsArray = [];
     // For each element with a "title" class
-    $(".title").each(function(i, element) {
+    $("td.title").each(function (i, element) {
       // Save the text of each link enclosed in the current element
       var title = $(this).children("a").text();
       // Save the href value of each link enclosed in the current element
       var link = $(this).children("a").attr("href");
-
-      // If this title element had both a title and a link
-      if (title && link) {
-        // Save the data in the scrapedData db
-        db.scrapedData.save({
-          title: title,
-          link: link
-        },
-        function(error, saved) {
-          // If there's an error during this query
-          if (error) {
-            // Log the error
-            console.log(error);
-          }
-          // Otherwise,
-          else {
-            // Log the saved data
-            console.log(saved);
-            data.push(saved);
-          }
-        });
+      var news = {
+        title: title,
+        link: link
+      }
+      if (title) {
+        newsArray.push(news);
       }
     });
+    // This will send a "Scrape Complete" message to the browser
+    res.json(newsArray);
   });
-
-  // This will send a "Scrape Complete" message to the browser
-  res.json(data);
 });
 
-app.get("/favicon.ico", function(req, res){
+app.post("/save", function (req, res){
+  console.log(req.body)
+  var newNews = new Mnews(req.body);
+  newNews.save(function(error, doc){
+    if (error)
+      res.send(error);
+  })
+});
+
+app.post("/delete/:id", function (req, res){
+  console.log(req.params.id)
+})
+
+app.get("/saved", function (req, res){
+  Mnews.find({}, function(error, doc) {
+    if (error) {
+      res.send(error);
+    } else {
+      res.render("saved", {doc});
+    }
+  })
+})
+
+app.get("/favicon.ico", function (req, res) {
   res.send(204);
 });
 
